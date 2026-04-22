@@ -1,0 +1,114 @@
+# to demonstrate production-grade CI/CD practices for this company.
+
+trigger: none
+
+parameters:
+- name: deployment
+  displayName: Select Deployment Environment
+  type: string
+  values:
+  - Dev
+  - Prod
+
+pool: Default
+
+variables:
+  workdir: '$(System.DefaultWorkingDirectory)/environment/${{ parameters.deployment }}' 
+
+stages:
+
+# ---------------- BUILD & VALIDATION ----------------
+- stage: Terraform_Build_And_Validate
+  displayName: "Terraform Build & Validation Stage"
+  jobs:
+    - job: Terraform_Init_And_Plan
+      displayName: "Initialize & Plan Infrastructure"
+      pool: Default
+      steps:
+      - task: TerraformTask@5
+        displayName: "Terraform Init"
+        inputs:
+          provider: 'azurerm'
+          command: 'init'
+          workingDirectory: '$(workdir)'
+          backendServiceArm: 'azuresp'
+          backendAzureRmResourceGroupName: 'dev-resource-group'
+          backendAzureRmStorageAccountName: 'storageaccount12345sp'
+          backendAzureRmContainerName: 'serviceconnection'
+          backendAzureRmKey: '${{ parameters.deployment }}.tfstate'
+
+      - task: TerraformTask@5
+        displayName: "Terraform Plan"
+        inputs:
+          provider: 'azurerm'
+          command: 'plan'
+          workingDirectory: '$(workdir)'
+          environmentServiceNameAzureRM: 'azuresp'
+
+      - task: TerraformTask@5
+        displayName: "Terraform Validate"
+        inputs:
+          provider: 'azurerm'
+          command: 'validate'
+          workingDirectory: '$(workdir)'
+
+
+# ---------------- SECURITY SCANNING ----------------
+- stage: Security_Compliance_Scan
+  displayName: "Terraform Security Scan (tfsec)"
+  jobs:
+    - job: TFSEC_Scan
+      displayName: "Run tfsec Security Scan"
+      pool: Default
+      steps:
+      - task: tfsec@1
+        displayName: "Execute tfsec Scan"
+        inputs:
+          version: 'v1.26.0'
+
+
+# ---------------- APPROVAL ----------------
+- stage: Manual_Approval_Gate
+  dependsOn: Security_Compliance_Scan
+  displayName: "Manual Approval for Deployment"
+  jobs:
+    - job: Approval_Validation
+      displayName: "Approval Checkpoint"
+      pool: server
+      steps:
+      - task: ManualValidation@1
+        displayName: "Await Manual Approval"
+        inputs:
+          notifyUsers: 'ajays1268@gmail.com'
+          approvers: 'ajays1268@gmail.com'
+
+
+# ---------------- DEPLOYMENT ----------------
+- stage: Terraform_Deployment
+  dependsOn: Manual_Approval_Gate
+  displayName: "Production Deployment Stage"
+  jobs:
+    - job: Apply_Infrastructure
+      displayName: "Deploy Infrastructure using Terraform"
+      pool: Default
+      steps:
+      - task: TerraformTask@5
+        displayName: "Terraform Init (Deployment)"
+        inputs:
+          provider: 'azurerm'
+          command: 'init'
+          workingDirectory: '$(workdir)'
+          backendServiceArm: '1'
+          backendAzureRmResourceGroupName: 'resource-rg1'
+          backendAzureRmStorageAccountName: 'storageaccount12345sp'
+          backendAzureRmContainerName: 'serviceconnection'
+          backendAzureRmKey: 'prod.tfstate'
+
+      - task: TerraformTask@5
+        displayName: "Terraform Apply"
+        inputs:
+          provider: 'azurerm'
+          command: 'apply'
+          workingDirectory: '$(workdir)'
+          commandOptions: '--auto-approve'
+          environmentServiceNameAzureRM: 'azuresp'
