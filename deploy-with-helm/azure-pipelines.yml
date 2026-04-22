@@ -1,0 +1,115 @@
+trigger: none
+
+pool:
+  name: kion-group-pool
+
+variables:
+  IMAGE_NAME: todo-ui
+  IMAGE_TAG: v4
+  ACR_NAME: kiondevacr12345
+  ACR_LOGIN_SERVER: kiondevacr12345.azurecr.io
+
+stages:
+
+# Stage: Build and Push Docker Image
+- stage: BuildAndPush
+  displayName: Build and Push Image
+  jobs:
+  - job: Build
+    displayName: Build & Push to ACR
+    pool:
+      name: kion-group-pool
+
+    steps:
+    # Azure Login
+    - task: AzureCLI@3
+      displayName: Login to ACR
+      inputs:
+        connectionType: 'azureRM'
+        azureSubscription: 'azure-pipeline-new'
+        scriptType: 'ps'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az acr login --name $(ACR_NAME)
+
+    # Build Image
+    - task: PowerShell@2
+      displayName: Build Docker Image
+      inputs:
+        targetType: 'inline'
+        script: |
+          docker build -t $(IMAGE_NAME):$(IMAGE_TAG) .
+
+    # Tag Image
+    - task: PowerShell@2
+      displayName: Tag Docker Image
+      inputs:
+        targetType: 'inline'
+        script: |
+          docker tag $(IMAGE_NAME):$(IMAGE_TAG) $(ACR_LOGIN_SERVER)/$(IMAGE_NAME):$(IMAGE_TAG)
+
+    # Push Image
+    - task: PowerShell@2
+      displayName: Push Docker Image
+      inputs:
+        targetType: 'inline'
+        script: |
+          docker push $(ACR_LOGIN_SERVER)/$(IMAGE_NAME):$(IMAGE_TAG)
+    - task: CopyFiles@2
+      inputs:
+        SourceFolder: 'helm-chart'
+        Contents: '*'
+        TargetFolder: '$(Build.ArtifactStagingDirectory)'
+        OverWrite: true
+    - task: PublishPipelineArtifact@1
+      inputs:
+        targetPath: '$(Build.ArtifactStagingDirectory)'
+        artifact: 'dev'
+        publishLocation: 'pipeline'
+
+- stage: HelmDeploymentStage
+  displayName: Deploy Helm Chart to AKS
+  dependsOn: BuildAndPush
+  jobs:
+    - deployment: HelmDeployJob
+      displayName: Deploy to AKS using Helm
+      environment: 'dev-environment'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+          
+              - task: DownloadPipelineArtifact@2
+                displayName: 'Download Dev Artifact'
+                inputs:
+                  buildType: 'current'
+                  artifactName: 'dev'
+                  targetPath: '$(Pipeline.Workspace)/dev'
+
+              - task: HelmInstaller@1
+                displayName: Install Helm CLI
+                inputs:
+                  helmVersionToInstall: 'latest'
+
+              - task: AzureCLI@3
+                displayName: Get AKS Credentials
+                inputs:
+                  connectionType: 'azureRM'
+                  azureSubscription: 'azure-pipeline-new'
+                  scriptType: 'ps'
+                  scriptLocation: 'inlineScript'
+                  inlineScript: 'az aks get-credentials --resource-group kion-rg-dev --name kion-dev-aks-cluster --overwrite-existing'
+              - task: HelmDeploy@1
+                displayName: Helm Upgrade/Install
+                inputs:
+                  connectionType: 'Azure Resource Manager'
+                  azureSubscription: 'azure-pipeline-new'
+                  azureResourceGroup: 'kion-rg-dev'
+                  kubernetesCluster: 'kion-dev-aks-cluster'
+                  namespace: 'default'
+                  command: 'upgrade'
+                  chartType: 'FilePath'
+                  chartPath: '$(Pipeline.Workspace)/dev/helm-chart'               
+                  releaseName: 'todo-ui'       
+                  valueFile: '$(Pipeline.Workspace)/dev/dev-values.yaml'
+

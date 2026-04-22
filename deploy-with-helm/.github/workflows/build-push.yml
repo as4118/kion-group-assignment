@@ -1,0 +1,45 @@
+name: Build and Push to ACR
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    env:
+      IMAGE_NAME: todo-ui
+      IMAGE_TAG: v4
+      ACR_NAME: kiondevacr12345
+      ACR_LOGIN_SERVER: kiondevacr12345.azurecr.io
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Azure Login
+        uses: Azure/login@v2.3.0
+        with:
+          client-id: 7b76f2aa-3796-4a03-8c7f-9c1c7fbd2197
+          tenant-id: 28e6d0be-f447-4e41-aa1f-4d6de13e7c96
+          subscription-id: 7ccb66b8-87a3-4a6a-9f86-aa9aaad3bf02
+
+      - name: Log in to ACR
+        run: |
+          az acr login --name $ACR_NAME
+
+      - name: Build Docker Image
+        run: |
+          docker build -t $IMAGE_NAME:$IMAGE_TAG .
+
+      - name: Tag Docker Image for ACR
+        run: |
+          docker tag $IMAGE_NAME:$IMAGE_TAG $ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG
+
+      - name: Push Docker Image to ACR
+        run: |
+          docker push $ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG

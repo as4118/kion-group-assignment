@@ -1,0 +1,24 @@
+common:
+  containerRegistryURL: kiondevacr12345.azurecr.io/todo-ui:v4
+  ingressClass: nginx
+
+ui:
+  replicas: 2
+
+  image:
+    name: todo-ui
+    tag: v4
+
+  port: 80
+  name: http
+  ServicePort: 80
+
+  ingress:
+    host: dev-ui.manpura.shop
+  probes:
+    liveness:
+      path: /
+      initialDelaySeconds: 30
+    readiness:
+      path: /
+      initialDelaySeconds: 10

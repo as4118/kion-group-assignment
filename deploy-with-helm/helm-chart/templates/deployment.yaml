@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-todo-ui
+  labels:
+    app: {{ .Release.Name }}-todo-ui
+spec:
+  replicas: {{ .Values.ui.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-todo-ui
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-todo-ui
+    spec:
+      containers:
+      - name: {{ .Release.Name }}-todo-ui
+
+        image: "{{ .Values.common.containerRegistryURL }}"
+        imagePullPolicy: IfNotPresent
+
+        ports:
+        - containerPort: {{ .Values.ui.port }}
+        livenessProbe:
+          httpGet:
+            path: /
+            port: {{ .Values.ui.port }}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: {{ .Values.ui.port }}
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "300m"
