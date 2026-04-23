@@ -1,6 +1,10 @@
 # to demonstrate production-grade CI/CD practices for this company.
 
-trigger: none
+trigger:
+  branches:
+    include:
+    - main
+    - features/**
 
 parameters:
 - name: deployment

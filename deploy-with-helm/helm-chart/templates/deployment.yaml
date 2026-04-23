@@ -18,7 +18,6 @@ spec:
       - name: {{ .Release.Name }}-todo-ui
 
         image: "{{ .Values.common.containerRegistryURL }}"
-        imagePullPolicy: IfNotPresent
 
         ports:
         - containerPort: {{ .Values.ui.port }}
