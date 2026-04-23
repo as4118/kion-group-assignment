@@ -2,8 +2,15 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ .Release.Name }}-todo-ui-ingress
+  namespace: tlsnamespace
 spec:
   ingressClassName: {{ .Values.common.ingressClass }}
+
+  tls:
+  - hosts:
+    - {{ .Values.ui.ingress.host }}
+    secretName: testsecret-tls
+
   rules:
   - host: {{ .Values.ui.ingress.host }}
     http:
