@@ -42,11 +42,11 @@ resource "azurerm_kubernetes_cluster" "aks" {
     node_count = each.value.node_count
     vm_size    = each.value.vm_size
 
-    min_count           = each.value.min_count
-    max_count           = each.value.max_count
-    os_disk_size_gb     = 50
-    type                = "VirtualMachineScaleSets"
-    enable_auto_scaling = true
+    min_count            = each.value.min_count
+    max_count            = each.value.max_count
+    os_disk_size_gb      = 50
+    type                 = "VirtualMachineScaleSets"
+    auto_scaling_enabled = true
   }
 
   identity {
