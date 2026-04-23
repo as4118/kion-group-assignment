@@ -30,7 +30,7 @@ module "loganalysis" {
 
 module "acr_aks" {
 
-  depends_on = [module.storage, module.subnet.module.loganalysis]
+  depends_on = [module.storage,module.loganalysis]
   source     = "../../module/azurerm_container_registry"
   acr        = var.acr
 }

@@ -122,6 +122,7 @@ storage_accounts = {
     virtual_network_address_space = ["10.95.0.0/16"]
     subnet_name                   = "kion-subnet-stgaccount1"
     subnet_address_prefixes       = ["10.95.1.0/24"]
+    storage_account_name         = "kionstgaccount1"
   }
 }
 

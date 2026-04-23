@@ -38,6 +38,7 @@ variable "storage_accounts" {
     virtual_network_address_space = list(string)
     subnet_name                   = string
     subnet_address_prefixes       = list(string)
+    storage_account_name          = string
   }))
 }
 

@@ -14,12 +14,12 @@ resource "azurerm_storage_account" "stg_account" {
   account_replication_type = each.value.account_replication_type
 }
 
-# ✅ Container for tfstate
 resource "azurerm_storage_container" "tfstate_container" {
   for_each              = var.storage_accounts
   name                  = "kioncontainer"
-  storage_account_name  = azurerm_storage_account.stg_account[each.key].name
   container_access_type = "private"
+  storage_account_name  = each.value.storage_account_name
+
 }
 
 resource "azurerm_virtual_network" "vnet" {
