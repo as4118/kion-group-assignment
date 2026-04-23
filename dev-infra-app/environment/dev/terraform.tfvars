@@ -1,66 +1,20 @@
-acr = {
-  dev = {
-    acr_name                    = "kiondevacr12345"
-    aks_name                    = "kion-dev-aks-cluster"
-    resource_group_name         = "kion-rg-dev"
-    location                    = "centralindia"
-    dns_prefix                  = "devaks"
-    node_count                  = 1
-    vm_size                     = "Standard_B2s_v2"
-    user_assigned_identity_name = "kion-dev-uami1"
-
+resource_groups = {
+  "rg1" = {
+    resource_group_name = "kion-rg-dev"
+    location            = "centralindia"
     tags = {
-      env  = "dev"
-      team = "kion-devops"
+      environment = "dev"
+      project     = "kion-group-assignment"
     }
-  }
-}
-
-storage_accounts = {
-  "stgaccount1" = {
-    name                          = "kionstgaccount1"
-    resource_group_name           = "kion-rg-dev"
-    location                      = "centralindia"
-    account_tier                  = "Standard"
-    account_replication_type      = "LRS"
-    virtual_network_name          = "kion-vnet-stgaccount1"
-    virtual_network_address_space = ["10.0.0.0/16"]
-    subnet_name                   = "kion-subnet-stgaccount1"
-    virtual_network_link_name     = "kion-vnet-link-stgaccount1"
-    subnet_address_prefixes       = ["10.0.1.0/24"]
-  }
-
-}
-
-servers = {
-  "server1" = {
-    server_name                  = "kion-dev-server-001"
-    resource_group_name          = "kion-rg-dev"
-    location                     = "centralindia"
-    administrator_login          = "Devopsadmin"
-    administrator_login_password = "Ajju!!!@@@1991"
-    databases_name               = "dev-database-001"
-  }
-}
-
-
-keyvault = {
-
-  "kv1" = {
-    key_vault_name              = "kion-devkey12345"
-    location                    = "centralindia"
-    resource_group_name         = "kion-rg-dev"
-    user_assigned_identity_name = "kion-dev-uami"
-
   }
 }
 
 vnets = {
   "vnet1" = {
-    virtual_network_name = "vnet1"
+    virtual_network_name = "kion-vnet-stgaccount1"
     address_space        = ["10.0.0.0/16"]
-    location             = "centralus"
-    resource_group_name  = "kiosrg"
+    location             = "centralindia"
+    resource_group_name  = "kion-rg-dev"
   }
 
 }
@@ -69,7 +23,7 @@ subnets = {
   "sub1" = {
     subnet_name          = "dev-frontend-sub"
     resource_group_name  = "kion-rg-dev"
-    virtual_network_name = "dev-vnet"
+    virtual_network_name = "kion-vnet-stgaccount1"
     address_prefixes     = ["10.0.1.0/24"]
     location             = "centralindia"
     nsg_name             = "nsg-frontend"
@@ -102,7 +56,7 @@ subnets = {
   "sub2" = {
     subnet_name          = "dev-backend-sub"
     resource_group_name  = "kion-rg-dev"
-    virtual_network_name = "dev-vnet"
+    virtual_network_name = "kion-vnet-stgaccount1"
     address_prefixes     = ["10.0.2.0/24"]
     location             = "centralindia"
     nsg_name             = "nsg-backend"
@@ -133,10 +87,69 @@ subnets = {
   }
 }
 
+acr = {
+  dev = {
+    acr_name                    = "kiondevacr12345"
+    aks_name                    = "kion-dev-aks-cluster"
+    resource_group_name         = "kion-rg-dev"
+    location                    = "Central India"
+    dns_prefix                  = "devaks"
+    node_count                  = 2
+    vm_size                     = "Standard_D4s_v3"
+    user_assigned_identity_name = "kion-dev-uami1"
+    kubernetes_version          = "1.29.0"
+    min_count                   = 1
+    max_count                   = 3
+
+    log_analytics_workspace_name = "acctest-01"
+
+    tags = {
+      env  = "dev"
+      team = "kion-devops"
+    }
+  }
+}
+
+storage_accounts = {
+  "stgaccount1" = {
+    name                          = "kionstgaccount1"
+    resource_group_name           = "kion-rg-dev"
+    location                      = "centralindia"
+    account_tier                  = "Standard"
+    account_replication_type      = "LRS"
+    virtual_network_link_name     = "kion-vnet-link"
+    virtual_network_name          = "kion-vnet-stgaccount12"
+    virtual_network_address_space = ["10.95.0.0/16"]
+    subnet_name                   = "kion-subnet-stgaccount1"
+    subnet_address_prefixes       = ["10.95.1.0/24"]
+  }
+}
+
+keyvault = {
+  "kv1" = {
+    key_vault_name              = "kion-devkey12345"
+    location                    = "centralindia"
+    resource_group_name         = "kion-rg-dev"
+    user_assigned_identity_name = "kion-dev-uami"
+  }
+}
+
+servers = {
+  server1 = {
+    server_name         = "kion-dev-server-001"
+    resource_group_name = "kion-rg-dev"
+    location            = "centralindia"
+    administrator_login = "Devopsadmin"
+    databases_name      = "kion-dev-database-001"
+    key_vault_name      = "kion-dev-kv-001"
+  }
+}
+
+
 log_analytics_workspace = {
   "workspace" = {
     workspace_name      = "dev-log-analytics-workspace"
     location            = "centralindia"
-    resource_group_name = "dev-resource-group1"
+    resource_group_name = "kion-rg-dev"
   }
 }

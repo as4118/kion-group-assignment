@@ -1,15 +1,26 @@
-variable "acr" {
-  description = "Map of ACR and AKS configurations"
-
+variable "resource_groups" {
   type = map(object({
-    acr_name                    = string
-    aks_name                    = string
-    resource_group_name         = string
-    location                    = string
-    dns_prefix                  = string
-    node_count                  = number
-    vm_size                     = string
-    user_assigned_identity_name = string
+    resource_group_name = string
+    location            = string
+    tags                = map(string)
+  }))
+}
+
+variable "acr" {
+  description = "ACR + AKS configuration"
+  type = map(object({
+    acr_name                     = string
+    aks_name                     = string
+    resource_group_name          = string
+    location                     = string
+    dns_prefix                   = string
+    node_count                   = number
+    vm_size                      = string
+    user_assigned_identity_name  = string
+    kubernetes_version           = string
+    min_count                    = number
+    max_count                    = number
+    log_analytics_workspace_name = string
 
     tags = map(string)
   }))
@@ -28,17 +39,17 @@ variable "storage_accounts" {
     subnet_name                   = string
     subnet_address_prefixes       = list(string)
   }))
-
 }
 
 variable "servers" {
+  description = "Map of MSSQL servers configuration"
   type = map(object({
-    server_name                  = string
-    resource_group_name          = string
-    location                     = string
-    administrator_login          = string
-    administrator_login_password = string
-    databases_name               = string
+    server_name         = string
+    resource_group_name = string
+    location            = string
+    key_vault_name      = string
+    administrator_login = string
+    databases_name      = string
   }))
 }
 

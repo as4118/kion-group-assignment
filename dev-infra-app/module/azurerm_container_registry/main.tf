@@ -1,3 +1,10 @@
+
+data "azurerm_log_analytics_workspace" "log_analytics_workspace" {
+  for_each            = var.acr
+  name                = each.value.log_analytics_workspace_name
+  resource_group_name = each.value.resource_group_name
+}
+
 resource "azurerm_container_registry" "acr" {
   for_each = var.acr
 
@@ -10,6 +17,16 @@ resource "azurerm_container_registry" "acr" {
   tags = each.value.tags
 }
 
+
+resource "azurerm_user_assigned_identity" "uami" {
+  for_each = var.acr
+
+  name                = each.value.user_assigned_identity_name
+  location            = each.value.location
+  resource_group_name = each.value.resource_group_name
+}
+
+
 resource "azurerm_kubernetes_cluster" "aks" {
   for_each = var.acr
 
@@ -18,10 +35,18 @@ resource "azurerm_kubernetes_cluster" "aks" {
   resource_group_name = each.value.resource_group_name
   dns_prefix          = each.value.dns_prefix
 
+  kubernetes_version = each.value.kubernetes_version
+
   default_node_pool {
-    name       = "default"
+    name       = "system"
     node_count = each.value.node_count
     vm_size    = each.value.vm_size
+
+    min_count           = each.value.min_count
+    max_count           = each.value.max_count
+    os_disk_size_gb     = 50
+    type                = "VirtualMachineScaleSets"
+    enable_auto_scaling = true
   }
 
   identity {
@@ -29,27 +54,25 @@ resource "azurerm_kubernetes_cluster" "aks" {
     identity_ids = [azurerm_user_assigned_identity.uami[each.key].id]
   }
 
+  role_based_access_control_enabled = true
+
+  network_profile {
+    network_plugin    = "azure"
+    load_balancer_sku = "standard"
+  }
+
+  oms_agent {
+    log_analytics_workspace_id = data.azurerm_log_analytics_workspace.log_analytics_workspace.id
+  }
+
   tags = each.value.tags
 }
 
 
-resource "azurerm_user_assigned_identity" "uami" {
-
+resource "azurerm_role_assignment" "acr_pull" {
   for_each = var.acr
 
-  location            = each.value.location
-  name                = each.value.user_assigned_identity_name
-  resource_group_name = each.value.resource_group_name
-}
-
-resource "azurerm_role_assignment" "acr_pull" {
-  for_each   = var.acr
-  depends_on = [azurerm_kubernetes_cluster.aks]
-
-  principal_id         = azurerm_user_assigned_identity.uami[each.key].principal_id
+  principal_id         = azurerm_kubernetes_cluster.aks[each.key].kubelet_identity[0].object_id
   role_definition_name = "AcrPull"
   scope                = azurerm_container_registry.acr[each.key].id
 }
-
-
-

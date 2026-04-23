@@ -11,5 +11,4 @@ variable "storage_accounts" {
     subnet_name                   = string
     subnet_address_prefixes       = list(string)
   }))
-
 }
