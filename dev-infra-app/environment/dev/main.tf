@@ -48,11 +48,5 @@ module "server" {
   servers    = var.servers
 }
 
-module "loganalysis" {
-  depends_on              = [module.resource_group]
-  source                  = "../../module/log_analysis_workspace"
-  log_analytics_workspace = var.log_analytics_workspace
-}
-
 
 

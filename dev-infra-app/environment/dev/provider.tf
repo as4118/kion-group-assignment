@@ -6,12 +6,12 @@ terraform {
     }
   }
 
-  backend "azurerm" {
-    resource_group_name  = "kion-rg-dev"
-    storage_account_name = "kionstgaccount1"
-    container_name       = "kioncontainer"
-    key                  = "kion.ttstate"
-  }
+  # backend "azurerm" {
+  #   resource_group_name  = "kion-rg-dev"
+  #   storage_account_name = "kionstgaccount1"
+  #   container_name       = "kioncontainer"
+  #   key                  = "kion.ttstate"
+  # }
 
 }
 provider "azurerm" {
